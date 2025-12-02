@@ -1,5 +1,3 @@
-use std::ops::Div;
-
 advent_of_code::solution!(1);
 
 const SAFE_NUMBERS: isize = 100;
