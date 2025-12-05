@@ -1,4 +1,4 @@
-use std::{ops::RangeInclusive};
+use std::ops::RangeInclusive;
 
 advent_of_code::solution!(2);
 
@@ -30,22 +30,17 @@ fn check_silly(num: u64) -> bool {
     is_silly
 }
 
-// fn check_really_silly(num: u64, cache: &mut BTreeMap<u64,bool>) -> bool {
-    fn check_really_silly(num: u64) -> bool {
-    // if let Some(value) = cache.get(&num) {
-    //     return *value
-    // }
-
+fn check_really_silly(num: u64) -> bool {
     let strnum = num.to_string();
     for digits in 1..=(strnum.len() / 2) {
         let mut subnums = strnum.as_bytes().chunks_exact(digits);
-        let Some(first_chunk) = subnums.next() else {continue};
+        let Some(first_chunk) = subnums.next() else {
+            continue;
+        };
         if subnums.remainder().is_empty() && subnums.all(|chunk| chunk == first_chunk) {
-            // cache.insert(num, true);
             return true;
         }
     }
-    // cache.insert(num, false);
     false
 }
 
@@ -64,12 +59,10 @@ pub fn part_one(input: &str) -> Option<u64> {
 
 pub fn part_two(input: &str) -> Option<u64> {
     let mut invalid_sum = 0;
-    //let mut silly_cache = BTreeMap::new();
     let ranges = parse_ranges(input);
     for range in ranges {
         for i in range {
-      //      if check_really_silly(i, &mut silly_cache) {
-      if check_really_silly(i) {
+            if check_really_silly(i) {
                 invalid_sum += i;
             }
         }
