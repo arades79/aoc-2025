@@ -5,7 +5,7 @@ use rangetools::Rangetools;
 
 advent_of_code::solution!(5);
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy,PartialEq, Eq, PartialOrd, Ord)]
 struct MyRange(u64, u64);
 
 impl MyRange {
@@ -43,7 +43,7 @@ fn parse_db(input: &str) -> Option<(FreshRanges, Ingredients)> {
             ingredients.push(ingredient);
         }
     }
-
+    fresh.sort();
     Some((fresh, ingredients))
 }
 
@@ -72,13 +72,28 @@ fn merge_ranges(ranges: &[MyRange]) -> Vec<MyRange> {
 
 pub fn part_two(input: &str) -> Option<u64> {
     let (fresh, _) = parse_db(input)?;
-    let mut merged_ranges = merge_ranges(&fresh);
-    while let new_merge = merge_ranges(&merged_ranges) && new_merge.len() != merged_ranges.len() {
-        merged_ranges = new_merge;
+    // let mut merged_ranges = merge_ranges(&fresh);
+    // while let new_merge = merge_ranges(&merged_ranges) && new_merge.len() != merged_ranges.len() {
+    //     merged_ranges = new_merge;
+    // }
+    // dbg!(&merged_ranges);
+    // let fresh_count = merged_ranges.into_iter().map(MyRange::len).sum();
+    let mut merged_ranged = Vec::new();
+    'fresh: for range in fresh.iter() {
+        let mut new_range = *range;
+        for other in fresh.iter() {
+            new_range.join(other);
+        }
+        for other in merged_ranged.iter_mut() {
+            if new_range.overlaps(other) {
+                other.join(&new_range);
+                continue 'fresh;
+            }
+        }
+        merged_ranged.push(new_range);
     }
-    dbg!(&merged_ranges);
-    let fresh_count = merged_ranges.into_iter().map(MyRange::len).sum();
-    Some(fresh_count)
+    let final_count = merged_ranged.iter().map(|r| r.len()).sum();
+    Some(final_count)
 }
 
 #[cfg(test)]
