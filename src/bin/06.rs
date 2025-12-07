@@ -95,7 +95,7 @@ pub fn part_one(input: &str) -> Option<u64> {
 
 pub fn part_two(input: &str) -> Option<u64> {
     let lines: Vec<_> = input.lines().collect();
-    dbg!(&lines);
+    // dbg!(&lines);
     let rows = lines.len();
     let mut total = 0;
     let mut operands = Vec::new();
@@ -106,18 +106,18 @@ pub fn part_two(input: &str) -> Option<u64> {
                 n @ b'0'..=b'9' => operand = (operand * 10) + (n - b'0') as u64,
                 b'*' => {
                     operands.push(operand);
-                    print!("multiplying {:?} = ", &operands);
+                    // print!("multiplying {:?} = ", &operands);
                     let problem_result = operands.clone().into_iter().fold(1u64, |acc, num| acc * num as u64);
-                    println!("{problem_result}");
+                    // println!("{problem_result}");
                     total += problem_result;
                     operands.clear();
                     continue 'outer;
                 }
                 b'+' => {
                     operands.push(operand);
-                    print!("adding {:?} = ", &operands);
+                    // print!("adding {:?} = ", &operands);
                     let problem_result = operands.clone().into_iter().fold(0u64, |acc, num| acc + num as u64);
-                    println!("{problem_result}");
+                    // println!("{problem_result}");
                     total += problem_result;
                     operands.clear();
                     continue 'outer;
