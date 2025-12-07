@@ -5,7 +5,7 @@ use rangetools::Rangetools;
 
 advent_of_code::solution!(5);
 
-#[derive(Debug, Clone, Copy,PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 struct MyRange(u64, u64);
 
 impl MyRange {
@@ -13,7 +13,7 @@ impl MyRange {
         self.0 <= element && self.1 >= element
     }
     fn overlaps(&self, other: &Self) -> bool {
-        (other.0 >= self.0 && other.0 <= self.1) || (other.1 >= self.0 && other.1 <= self.1)
+        self.contains(other.0) || self.contains(other.1)
     }
 
     fn join(&mut self, other: &Self) {
@@ -62,7 +62,7 @@ fn merge_ranges(ranges: &[MyRange]) -> Vec<MyRange> {
         for other in merged_ranges.iter_mut() {
             if r.overlaps(other) {
                 other.join(&r);
-                continue 'fresh
+                continue 'fresh;
             }
         }
         merged_ranges.push(r);
@@ -79,12 +79,12 @@ pub fn part_two(input: &str) -> Option<u64> {
     // dbg!(&merged_ranges);
     // let fresh_count = merged_ranges.into_iter().map(MyRange::len).sum();
     let mut merged_ranged = Vec::new();
-    'fresh: for range in fresh.iter() {
+    'fresh: for range in fresh.iter().sorted() {
         let mut new_range = *range;
-        for other in fresh.iter() {
+        for other in fresh.iter().sorted() {
             new_range.join(other);
         }
-        for other in merged_ranged.iter_mut() {
+        for other in merged_ranged.iter_mut().sorted() {
             if new_range.overlaps(other) {
                 other.join(&new_range);
                 continue 'fresh;
@@ -92,7 +92,27 @@ pub fn part_two(input: &str) -> Option<u64> {
         }
         merged_ranged.push(new_range);
     }
-    let final_count = merged_ranged.iter().map(|r| r.len()).sum();
+    let mut more_merged_ranged: Vec<MyRange> = Vec::new();
+    'fresh: for range in merged_ranged.iter().sorted() {
+        let mut new_range = *range;
+        for other in merged_ranged.iter().sorted() {
+            new_range.join(other);
+        }
+        for other in more_merged_ranged.iter_mut().sorted() {
+            if other.overlaps(&new_range) {
+                other.join(&new_range);
+                continue 'fresh;
+            }
+        }
+        more_merged_ranged.push(new_range);
+    }
+    for range in more_merged_ranged.iter() {
+        let any_overlaps = more_merged_ranged
+            .iter()
+            .any(|r| range != r && range.overlaps(r));
+        println!("range {range:?} overlaps: {any_overlaps}");
+    }
+    let final_count = more_merged_ranged.iter().map(|r| r.len()).sum();
     Some(final_count)
 }
 
