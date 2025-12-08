@@ -56,28 +56,8 @@ pub fn part_one(input: &str) -> Option<u64> {
     Some(fresh_ingredient_count as u64)
 }
 
-fn merge_ranges(ranges: &[MyRange]) -> Vec<MyRange> {
-    let mut merged_ranges = Vec::new();
-    'fresh: for r in ranges.iter().copied() {
-        for other in merged_ranges.iter_mut() {
-            if r.overlaps(other) {
-                other.join(&r);
-                continue 'fresh;
-            }
-        }
-        merged_ranges.push(r);
-    }
-    merged_ranges
-}
-
 pub fn part_two(input: &str) -> Option<u64> {
     let (fresh, _) = parse_db(input)?;
-    // let mut merged_ranges = merge_ranges(&fresh);
-    // while let new_merge = merge_ranges(&merged_ranges) && new_merge.len() != merged_ranges.len() {
-    //     merged_ranges = new_merge;
-    // }
-    // dbg!(&merged_ranges);
-    // let fresh_count = merged_ranges.into_iter().map(MyRange::len).sum();
     let mut merged_ranged = Vec::new();
     'fresh: for range in fresh.iter().sorted() {
         let mut new_range = *range;
@@ -92,6 +72,7 @@ pub fn part_two(input: &str) -> Option<u64> {
         }
         merged_ranged.push(new_range);
     }
+    // I dn't understand why this needs to happen twice, but if it doesn't happen twice there's one range unmerged
     let mut more_merged_ranged: Vec<MyRange> = Vec::new();
     'fresh: for range in merged_ranged.iter().sorted() {
         let mut new_range = *range;
@@ -106,12 +87,12 @@ pub fn part_two(input: &str) -> Option<u64> {
         }
         more_merged_ranged.push(new_range);
     }
-    for range in more_merged_ranged.iter() {
-        let any_overlaps = more_merged_ranged
-            .iter()
-            .any(|r| range != r && range.overlaps(r));
-        println!("range {range:?} overlaps: {any_overlaps}");
-    }
+    // for range in more_merged_ranged.iter() {
+    //     let any_overlaps = more_merged_ranged
+    //         .iter()
+    //         .any(|r| range != r && range.overlaps(r));
+    //     println!("range {range:?} overlaps: {any_overlaps}");
+    // }
     let final_count = more_merged_ranged.iter().map(|r| r.len()).sum();
     Some(final_count)
 }
