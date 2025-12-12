@@ -40,7 +40,7 @@ pub fn part_two(input: &str) -> Option<u64> {
     let svr = "svr".to_string();
     let svr_dac_paths = count_paths(&svr, succ, done("dac"));
     let svr_fft_paths = count_paths(&svr, succ, done("fft"));
-    let svr_out_paths = count_paths(&svr, succ, done("out"));
+    let _svr_out_paths = count_paths(&svr, succ, done("out"));
 
     let dac = "dac".to_string();
     let dac_fft_paths = count_paths(&dac, succ, done("fft"));
@@ -50,15 +50,15 @@ pub fn part_two(input: &str) -> Option<u64> {
     let fft_dac_paths = count_paths(&fft, succ, done("dac"));
     let fft_out_paths = count_paths(&fft, succ, done("out"));
 
-    dbg!(
-        svr_dac_paths,
-        svr_fft_paths,
-        svr_out_paths,
-        dac_fft_paths,
-        dac_out_paths,
-        fft_dac_paths,
-        fft_out_paths,
-    );
+    // dbg!(
+    //     svr_dac_paths,
+    //     svr_fft_paths,
+    //     svr_out_paths,
+    //     dac_fft_paths,
+    //     dac_out_paths,
+    //     fft_dac_paths,
+    //     fft_out_paths,
+    // );
     let svr_fft_dac_out_paths = svr_fft_paths * fft_dac_paths * dac_out_paths;
     let svr_dac_fft_out_paths = svr_dac_paths * dac_fft_paths * fft_out_paths;
     let res_paths = (svr_dac_fft_out_paths + svr_fft_dac_out_paths) as u64;

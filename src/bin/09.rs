@@ -25,14 +25,35 @@ impl Point {
         // dbg!(x,y);
         Some(Self(x, y))
     }
+
+    fn neighbors(&self) -> [Point; 4] {
+        [
+            Point(self.0 - 1, self.1),
+            Point(self.0 + 1, self.1),
+            Point(self.0, self.1 - 1),
+            Point(self.0, self.1 + 1),
+        ]
+    }
 }
 
 fn parse_tiles(input: &str) -> Vec<Point> {
     input.lines().filter_map(Point::from_str).collect()
 }
 
-fn check_in_red_green(tiles: &BTreeSet<Point>, to_check: Point) ->bool {
-    
+type Limits = (u32, u32, u32, u32);
+
+fn get_limits(red_tiles: &[Point]) -> Limits {
+    red_tiles.iter().fold(
+        (999999999, 999999999, 0, 0),
+        |(min_x, min_y, max_x, max_y), tile| {
+            (
+                min_x.min(tile.0),
+                min_y.min(tile.1),
+                max_x.max(tile.0),
+                max_y.max(tile.1),
+            )
+        },
+    )
 }
 
 fn green_from_red(red_tiles: &[Point]) -> BTreeSet<Point> {
@@ -43,14 +64,14 @@ fn green_from_red(red_tiles: &[Point]) -> BTreeSet<Point> {
             let min_y = point1.1.min(point2.1);
             let max_y = point1.1.max(point2.1);
             for y in min_y..max_y {
-                green_tiles.push(Point(x,y));
+                green_tiles.insert(Point(x, y));
             }
         } else if point1.1 == point2.1 {
             let y = point1.1;
             let min_x = point1.0.min(point2.0);
             let max_x = point1.0.max(point2.0);
             for x in min_x..max_x {
-                green_tiles.push(Point(x,y));
+                green_tiles.insert(Point(x, y));
             }
         }
     };
@@ -62,7 +83,20 @@ fn green_from_red(red_tiles: &[Point]) -> BTreeSet<Point> {
     }
     let (last_red, first_red) = (red_tiles.first().unwrap(), red_tiles.last().unwrap());
     add_greens(last_red, first_red);
-
+    let limits = get_limits(red_tiles);
+    let center_x = ((limits.2 - limits.0) / 2) + limits.0;
+    let center_x = ((limits.3 - limits.1) / 2) + limits.1;
+    let center = Point(center_x, center_y);
+    let mut fill_greens: VecDeque<Point> = VecDeque::new();
+    fill_greens.push_back(center);
+    while let Some(tile) = fill_greens.pop_front() {
+        green_tiles.insert(tile);
+        for near in tile.neighbors() {
+            if !green_tiles.contains(&near) {
+                fill_greens.push_back(near);
+            }
+        }
+    }
     green_tiles
 }
 
