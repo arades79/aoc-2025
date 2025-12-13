@@ -14,6 +14,58 @@ const PIECE_SIZE: usize = 3;
 #[derive(Debug, Clone, Copy)]
 struct Piece([[bool; PIECE_SIZE]; PIECE_SIZE]);
 
+impl Piece {
+    const fn rotate_l(self) -> Self {
+        Self([
+            [self.0[0][2], self.0[1][2], self.0[2][2]],
+            [self.0[0][1], self.0[1][1], self.0[2][1]],
+            [self.0[0][0], self.0[1][0], self.0[2][0]],
+        ])
+    }
+
+    const fn rotate_r(self) -> Self {
+        Self([
+            [self.0[2][0], self.0[1][0], self.0[0][0]],
+            [self.0[2][1], self.0[1][1], self.0[0][1]],
+            [self.0[2][2], self.0[1][2], self.0[0][2]],
+        ])
+    }
+
+    const fn flip_h(mut self) -> Self {
+        self.0[0].reverse();
+        self.0[1].reverse();
+        self.0[2].reverse();
+        self
+    }
+
+    const fn flip_v(mut self) -> Self {
+        self.0.reverse();
+        self
+    }
+
+    const fn variants(self) -> [Piece; 5] {
+        [
+            self,
+            self.rotate_l(),
+            self.rotate_r(),
+            self.flip_h(),
+            self.flip_v(),
+        ]
+    }
+
+    const fn size(&self) -> usize {
+        self.0[0][0] as usize
+            + self.0[0][1] as usize
+            + self.0[0][2] as usize
+            + self.0[1][0] as usize
+            + self.0[1][1] as usize
+            + self.0[1][2] as usize
+            + self.0[2][0] as usize
+            + self.0[2][1] as usize
+            + self.0[2][2] as usize
+    }
+}
+
 fn parse_piece(input: &mut &str) -> winnow::Result<Piece> {
     preceded(
         opt((digit1, ':', newline)),
@@ -21,11 +73,11 @@ fn parse_piece(input: &mut &str) -> winnow::Result<Piece> {
             PIECE_SIZE,
             terminated(
                 repeat(PIECE_SIZE, one_of(['.', '#']).map(|c| c == '#'))
-                    .map(|v: Vec<bool>| [v[0], v[1], v[3]]),
+                    .map(|v: Vec<bool>| [v[0], v[1], v[2]]),
                 newline,
             ),
         )
-        .map(|v: Vec<_>| [v[0], v[1], v[3]]),
+        .map(|v: Vec<_>| [v[0], v[1], v[2]]),
     )
     .map(|arr| Piece(arr))
     .parse_next(input)
@@ -45,6 +97,41 @@ impl Region {
             required,
         }
     }
+
+    fn can_insert_piece(&self, piece: &Piece, row: usize, col: usize) -> bool {
+        if row > (self.grid.len() - PIECE_SIZE) || col > (self.grid[0].len() - PIECE_SIZE) {
+            return false;
+        }
+        for y in 0..PIECE_SIZE {
+            for x in 0..PIECE_SIZE {
+                if self.grid[y + row][x + col] && piece.0[y][x] {
+                    return false;
+                }
+            }
+        }
+        true
+    }
+
+    fn toggle_piece(&mut self, piece: &Piece, row: usize, col: usize) {
+        for y in 0..PIECE_SIZE {
+            for x in 0..PIECE_SIZE {
+                self.grid[y + row][x + col] ^= piece.0[y][x];
+            }
+        }
+    }
+
+    fn requirements_possible(&self, pieces: &Pieces) -> bool {
+        let area_available: usize = self.grid[0].len() * self.grid.len();
+        let piece_total: usize = pieces
+            .iter()
+            .enumerate()
+            .map(|(idx, piece)| piece.size() * self.required[idx])
+            .sum();
+        if piece_total > area_available {
+            return false;
+        }
+        true
+    }
 }
 
 fn parse_region(input: &mut &str) -> winnow::Result<Region> {
@@ -54,7 +141,7 @@ fn parse_region(input: &mut &str) -> winnow::Result<Region> {
         repeat(PIECES, preceded(' ', dec_uint::<_, usize, _>))
             .map(|v: Vec<usize>| [v[0], v[1], v[2], v[3], v[4], v[5]]),
     )
-        .map(|(length, width, required)| Region::new(length, width, required))
+        .map(|(width, length, required)| Region::new(length, width, required))
         .parse_next(input)
 }
 
@@ -69,7 +156,11 @@ fn parse_input(input: &mut &str) -> winnow::Result<(Pieces, Vec<Region>)> {
 
 pub fn part_one(input: &str) -> Option<u64> {
     let (pieces, regions) = parse_input.parse(input).ok()?;
-    None
+    let fittable_regions = regions
+        .into_iter()
+        .filter(|region| region.requirements_possible(&pieces))
+        .count();
+    Some(fittable_regions as u64)
 }
 
 pub fn part_two(input: &str) -> Option<u64> {
