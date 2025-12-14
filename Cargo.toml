@@ -32,4 +32,5 @@ pathfinding = "4.14.0"
 pico-args = "0.5.0"
 rangetools = "0.1.4"
 winnow = "0.7.14"
+z3 = {version = "0.19.6", features = ["gh-release"]}
 

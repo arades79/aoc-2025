@@ -2,7 +2,7 @@ advent_of_code::solution!(10);
 
 use winnow::Result;
 use winnow::ascii::{dec_uint, space1};
-use winnow::combinator::separated;
+use winnow::combinator::{opt, separated};
 use winnow::combinator::{delimited, preceded, repeat};
 use winnow::prelude::*;
 use winnow::token::one_of;
@@ -166,17 +166,30 @@ pub fn part_two(input: &str) -> Option<u64> {
         .collect();
     let mut total_buttons = 0;
     for machine in machines {
-        let (_buttons, presses) = astar(
-            &machine.starting_jolts(),
-            |jolts| machine.next_jolts(jolts),
-            |jolts| machine.plausible_cost(jolts),
-            |jolts| machine.jolts_good(jolts),
-        )?;
-        println!(
-            "Got machine to required joltages {:?} with {} presses",
-            machine.joltages, presses
-        );
-        total_buttons += presses as u64;
+        let optimizer = z3::Optimize::new();
+        let mut joltages = vec![z3::ast::Int::from_u64(0); machine.joltages.len()];
+        let buttons: Vec<_> = machine
+            .buttons
+            .iter()
+            .enumerate()
+            .map(|(idx, button)| {
+                let var = z3::ast::Int::new_const(format!("button {idx}"));
+                optimizer.assert(&var.ge(z3::ast::Int::from_u64(0)));
+                for jolt_idx in button.0.iter() {
+                    joltages[*jolt_idx] = &joltages[*jolt_idx] + &var;
+                }
+                var
+            })
+            .collect();
+        for (idx, jolts) in joltages.iter().enumerate() {
+            optimizer.assert(&jolts.eq(z3::ast::Int::from_u64(machine.joltages[idx] as u64)));
+        }
+        let presses: z3::ast::Int = buttons.iter().sum();
+        optimizer.minimize(&presses);
+
+        if optimizer.check(&[]) == z3::SatResult::Sat {
+            total_buttons += optimizer.get_model()?.eval(&presses, true)?.as_u64()?
+        }
     }
     Some(total_buttons)
 }
